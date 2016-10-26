@@ -183,12 +183,23 @@ module OmniAuth
               root.add_child(doc.create_element('validation-factors'))
             end
 
+            ips = @client_ip.rpartition(/,\s*/)
+            remote_address = ips.last
+            x_forwarded_for = ips.first
+
             validation_factor = doc.create_element('validation-factor')
             validation_factor.add_child(doc.create_element('name', 'remote_address'))
-            validation_factor.add_child(doc.create_element('value', @client_ip))
-            
+            validation_factor.add_child(doc.create_element('value', remote_address))
+
             doc.xpath('//validation-factors').first.add_child(validation_factor)
-            
+
+            if x_forwarded_for != ""
+              validation_factor = doc.create_element('validation-factor')
+              validation_factor.add_child(doc.create_element('name', 'X-Forwarded-For'))
+              validation_factor.add_child(doc.create_element('value', x_forwarded_for))
+
+              doc.xpath('//validation-factors').first.add_child(validation_factor)
+            end
           end
           
           make_request(url, doc.to_s)
