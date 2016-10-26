@@ -76,6 +76,7 @@ module OmniAuth
         end
 
         @user_info = validator.user_info
+        @crowd_info = validator.crowd_info
 
         return fail!(:invalid_credentials) if @user_info.nil? || @user_info.empty?
 
@@ -85,7 +86,8 @@ module OmniAuth
       def auth_hash
         OmniAuth::Utils.deep_merge(super, {
           'uid' => @user_info.delete("user"),
-          'info' => @user_info
+          'info' => @user_info,
+          'crowd_info' => @crowd_info
         })
       end
     end

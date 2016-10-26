@@ -4,13 +4,14 @@ module OmniAuth
   module Strategies
     class Crowd
       class Configuration
+        DEFAULT_CONFIGURATION_URL = "%s/rest/usermanagement/latest/config/cookie"
         DEFAULT_SESSION_URL = "%s/rest/usermanagement/latest/session"
         DEFAULT_AUTHENTICATION_URL = "%s/rest/usermanagement/latest/authentication"
         DEFAULT_USER_GROUP_URL = "%s/rest/usermanagement/latest/user/group/direct"
         DEFAULT_CONTENT_TYPE = 'application/xml'
         DEFAULT_SESSION_COOKIE = 'crowd.token_key'
 
-        attr_reader :crowd_application_name, :crowd_password, :disable_ssl_verification, :include_users_groups, :use_sessions, :session_url, :content_type, :session_cookie, :sso_url, :sso_url_image
+        attr_reader :crowd_application_name, :crowd_password, :disable_ssl_verification, :include_users_groups, :use_sessions, :configuration_url, :session_url, :content_type, :session_cookie, :sso_url, :sso_url_image
 
         alias :"disable_ssl_verification?" :disable_ssl_verification
         alias :"include_users_groups?" :include_users_groups
@@ -19,6 +20,7 @@ module OmniAuth
         # @param [Hash] params configuration options
         # @option params [String, nil] :crowd_server_url the Crowd server root URL; probably something like
         #         `https://crowd.mycompany.com` or `https://crowd.mycompany.com/crowd`; optional.
+        # @option params [String, nil] :crowd_configuration_url (:crowd_server_url + '/rest/usermanagement/latest/config/cookie')
         # @option params [String, nil] :crowd_authentication_url (:crowd_server_url + '/rest/usermanagement/latest/authentication') the URL to which to
         #         use for authenication; optional if `:crowd_server_url` is specified,
         #         required otherwise.
@@ -69,6 +71,7 @@ module OmniAuth
             raise ArgumentError.new("Either :crowd_server_url or :crowd_authentication_url MUST be provided")
           end
 
+          @configuration_url  = options[:crowd_configuration_url] || DEFAULT_CONFIGURATION_URL % options[:crowd_server_url]
           if @use_sessions
             @session_url            = options[:crowd_session_url] || DEFAULT_SESSION_URL % options[:crowd_server_url]
             validate_is_url 'session URL', @session_url

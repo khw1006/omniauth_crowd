@@ -29,6 +29,12 @@ module OmniAuth
           user_info_hash
         end
 
+        def crowd_info
+          crowd_info_hash = retrieve_crowd_info!
+
+          crowd_info_hash
+        end
+
         private
         def set_session!(user_info_hash)
 
@@ -92,6 +98,31 @@ module OmniAuth
           end
         end
 
+        def retrieve_crowd_info!
+          response = make_config_request
+
+          unless response === nil
+            unless response.code.to_i != 200 || response.body.nil? || response.body == ''
+
+              doc = Nokogiri::XML(response.body)
+              result = {
+                "sso_domain" => doc.xpath("//cookie-config/domain/text()").to_s,
+                "cookie_name" => doc.xpath("//cookie-config/name/text()").to_s,
+              }
+
+              result
+
+            else
+              OmniAuth.logger.send(:warn, "(crowd) [retrieve_crowd_info!] response code: #{response.code.to_s}")
+              OmniAuth.logger.send(:warn, "(crowd) [retrieve_crowd_info!] response body: #{response.body}")
+              nil
+            end
+          else
+            OmniAuth.logger.send(:warn, "(crowd) [retrieve_crowd_info!] no response!")
+            nil
+          end
+        end
+
         def make_request(uri, body=nil)
           http_method = body.nil? ? Net::HTTP::Get : Net::HTTP::Post
           http = Net::HTTP.new(uri.host, uri.port)
@@ -106,6 +137,10 @@ module OmniAuth
             end
             http.request(req)
           end
+        end
+
+        def make_config_request
+          make_request(URI.parse(@configuration.configuration_url))
         end
 
         def make_user_group_request(username)
