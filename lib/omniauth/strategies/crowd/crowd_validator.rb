@@ -7,8 +7,8 @@ module OmniAuth
     class Crowd
       class CrowdValidator
         AUTHENTICATION_REQUEST_BODY = "<password><value>%s</value></password>"
-        def initialize(configuration, username, password, x_forwarded_for, remote_address, tokens)
-          @configuration, @username, @password, @x_forwarded_for, @remote_address, @tokens = configuration, username, password, x_forwarded_for, remote_address, tokens
+        def initialize(configuration, username, password, client_ip, tokens)
+          @configuration, @username, @password, @client_ip, @tokens = configuration, username, password, client_ip, tokens
           @authentiction_uri = URI.parse(@configuration.authentication_url(@username))
           @session_uri       = URI.parse(@configuration.session_url) if @configuration.use_sessions
         end
@@ -174,7 +174,7 @@ module OmniAuth
             url = URI.parse(@session_uri.to_s() + "/#{token}")
           end
 
-          if @configuration.use_sessions? || @remote_address
+          if @configuration.use_sessions? || @client_ip
 
             if root === nil
               root = doc.create_element('validation-factors')
@@ -185,17 +185,10 @@ module OmniAuth
 
             validation_factor = doc.create_element('validation-factor')
             validation_factor.add_child(doc.create_element('name', 'remote_address'))
-            validation_factor.add_child(doc.create_element('value', @remote_address))
+            validation_factor.add_child(doc.create_element('value', @client_ip))
             
             doc.xpath('//validation-factors').first.add_child(validation_factor)
-
-            if !@x_forwarded_for.nil? 
-              validation_factor = doc.create_element('validation-factor')
-              validation_factor.add_child(doc.create_element('name', 'X-Forwarded-For'))
-              validation_factor.add_child(doc.create_element('value', @x_forwarded_for))
             
-              doc.xpath('//validation-factors').first.add_child(validation_factor)
-            end
           end
           
           make_request(url, doc.to_s)

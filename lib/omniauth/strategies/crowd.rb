@@ -33,6 +33,10 @@ module OmniAuth
         end
       end
 
+      def get_client_ip
+        env['HTTP_X_FORWARDED_FOR'] ? env['HTTP_X_FORWARDED_FOR'] : env['REMOTE_ADDRESS']
+      end
+
       def get_sso_tokens
         env['HTTP_COOKIE'].split(';').select { |val| 
           val.strip.start_with?(@configuration.session_cookie)
@@ -67,12 +71,12 @@ module OmniAuth
 
         unless creds
           if @configuration.use_sessions? && request.cookies[@configuration.session_cookie]
-            validator = CrowdValidator.new(@configuration, username, password, env['HTTP_X_FORWARDED_FOR'], env['REMOTE_ADDRESS'], get_sso_tokens)
+            validator = CrowdValidator.new(@configuration, username, password, get_client_ip, get_sso_tokens)
           else
             return fail!(:no_credentials)
           end
         else
-          validator = CrowdValidator.new(@configuration, username, password, env['HTTP_X_FORWARDED_FOR'], env['REMOTE_ADDRESS'], nil)
+          validator = CrowdValidator.new(@configuration, username, password, get_client_ip, nil)
         end
 
         @user_info = validator.user_info
